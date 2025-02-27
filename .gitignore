@@ -1,0 +1,10 @@
+.qodo
+.env
+downloads
+node_modules
+logs
+data
+dist
+
+package-lock.json
+tsconfig.tsbuildinfo
