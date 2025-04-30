@@ -81,6 +81,9 @@ export class PostProcessor {
 
       // Format post text
       let text = post.text || '';
+      
+      // Convert VK-style links to Telegram-compatible format
+      text = this.convertVKLinks(text);
 
       // Add post URL
       const postUrl = this.vkClient.getPostUrl(post);
@@ -122,6 +125,28 @@ export class PostProcessor {
       logger.error(`Error processing post ${postId}: ${errorMessage}`);
       // Don't throw here to continue processing other posts
     }
+  }
+
+  /**
+   * Converts VK-style links like [https://vk.com/wall-217026624_913|источник]
+   * to Telegram HTML format <a href="https://vk.com/wall-217026624_913">источник</a>
+   * 
+   * @param text Post text containing VK-style links
+   * @returns Text with converted links
+   */
+  private convertVKLinks(text: string): string {
+    // Regular expression to match VK-style links: [url|text]
+    const vkLinkRegex = /\[(https?:\/\/[^\|\]]+)\|([^\]]+)\]/g;
+    
+    // Replace VK-style links with Telegram HTML format
+    return text.replace(vkLinkRegex, (match, url, linkText) => {
+      // Make sure the URL and link text are properly sanitized to prevent HTML injection
+      const sanitizedUrl = url.trim();
+      const sanitizedLinkText = linkText.trim();
+      
+      // Create Telegram-compatible HTML link
+      return `<a href="${sanitizedUrl}">${sanitizedLinkText}</a>`;
+    });
   }
 
   /**
@@ -218,14 +243,14 @@ export class PostProcessor {
           // Одна фотография
           await this.telegramClient.sendPhoto(photoUrls[0], text);
         } else {
-          // Альбом фотографий
+          // Альбом ф��тографий
           await this.telegramClient.sendMediaGroup(photoUrls, text);
         }
         // Очищаем текст для последующих вложений
         text = '';
       }
 
-      // Отправляем GIF-аним��ции
+      // Отправляем GIF-анимации
       for (const gifUrl of gifUrls) {
         await this.telegramClient.sendAnimation(gifUrl, text);
         // Очищаем текст после первой отправки
